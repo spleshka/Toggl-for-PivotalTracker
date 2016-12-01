@@ -32,19 +32,57 @@ chrome.extension.sendMessage({}, function(response) {
        * Main entry point to loop through all stories and to process them.
        */
       var processStories = function processStories(node) {
-        if (typeof node.querySelectorAll !== 'undefined') {
 
-          // Select all visible stories.
-          var stories = node.querySelectorAll('.story.item');
-          if (!stories.length) {
-            return;
-          }
+        if (typeof node.querySelectorAll == 'undefined') {
+          return;
+        }
+
+        // Select all visible stories.
+        var stories = node.querySelectorAll('.story.item');
+        if (!stories.length) {
+          return;
+        }
+
+        if (typeof window.projectMapped == 'undefined') {
+          window.projectMapped = false;
+
+          chrome.storage.sync.get({ mappedProjects: [] }, function(storage) {
+
+            if (!storage.mappedProjects.length) {
+              return;
+            }
+
+            var mappedProjects = [];
+            for (i in storage.mappedProjects) {
+              var project = storage.mappedProjects[i];
+              mappedProjects.push(project.pivotal.id);
+            }
+
+            const regex = /\/n\/projects\/(\d+)/;
+            var regExp = regex.exec(window.location.pathname);
+            var currentProjectId = parseInt(regExp[1]);
+
+            if ($.inArray(currentProjectId, mappedProjects) === -1) {
+              console.log('Toggl for PT: The current project is not mapped to Toggl in Chrome extension configurations.');
+              return;
+            }
+
+            window.projectMapped = true;
+
+            // Loop through every story.
+            Array.prototype.forEach.call(stories, function (story) {
+              addTimeTrackingButton(story);
+            });
+          });
+        }
+        else if (window.projectMapped == true) {
 
           // Loop through every story.
           Array.prototype.forEach.call(stories, function (story) {
             addTimeTrackingButton(story);
           });
         }
+
       };
 
 
