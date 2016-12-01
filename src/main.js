@@ -52,30 +52,33 @@ chrome.extension.sendMessage({}, function(response) {
               return;
             }
 
-            var mappedProjects = [];
-            for (i in storage.mappedProjects) {
-              var project = storage.mappedProjects[i];
-              mappedProjects.push(project.pivotal.id);
-            }
-
             const regex = /\/n\/projects\/(\d+)/;
             var regExp = regex.exec(window.location.pathname);
             var currentProjectId = parseInt(regExp[1]);
 
-            if ($.inArray(currentProjectId, mappedProjects) === -1) {
-              console.log('Toggl for PT: The current project is not mapped to Toggl in Chrome extension configurations.');
-              return;
+            var mappedProjects = [];
+            for (i in storage.mappedProjects) {
+              var project = storage.mappedProjects[i];
+              if (project.pivotal.id == currentProjectId) {
+                window.projectMapped = project.toggl.id;
+              }
             }
 
-            window.projectMapped = true;
-
-            // Loop through every story.
-            Array.prototype.forEach.call(stories, function (story) {
-              addTimeTrackingButton(story);
-            });
+            if (typeof window.projectMapped == 'number') {
+              // Loop through every story.
+              Array.prototype.forEach.call(stories, function (story) {
+                addTimeTrackingButton(story);
+              });
+            }
+            else {
+              if ($.inArray(currentProjectId, mappedProjects) === -1) {
+                console.log('Toggl for PT: The current project is not mapped to Toggl in Chrome extension configurations.');
+                return;
+              }
+            }
           });
         }
-        else if (window.projectMapped == true) {
+        else if (typeof window.projectMapped == 'number') {
 
           // Loop through every story.
           Array.prototype.forEach.call(stories, function (story) {
@@ -136,13 +139,8 @@ chrome.extension.sendMessage({}, function(response) {
         if (state == 'unstarted') {
           var storyID = this.getAttribute('data-story-id');
           var storyLabel = this.getAttribute('data-story-label');
-          console.log(storyID);
-          console.log(storyLabel);
 
-          Toggl.timers.start('#' + storyID + ' ' + storyLabel, 26259673).then(function(timer) {
-            console.log(timer);
-            console.log(timer.data.id);
-
+          Toggl.timers.start('#' + storyID + ' ' + storyLabel, window.projectMapped).then(function(timer) {
             trackButton.innerHTML = 'Stop';
             trackButton.className = 'button stop';
             trackButton.setAttribute('data-timer-id', timer.data.id);
@@ -151,16 +149,12 @@ chrome.extension.sendMessage({}, function(response) {
         }
         else {
           var timerID = this.getAttribute('data-timer-id');
-          console.log(timerID);
-
           Toggl.timers.stop(timerID).then(function(){
             trackButton.innerHTML = 'Start';
             trackButton.className = 'button start';
             trackButton.setAttribute('data-state', 'unstarted');
             trackButton.setAttribute('data-timer-id', '');
           });
-
-
         }
 
       }
