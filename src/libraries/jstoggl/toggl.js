@@ -24,6 +24,8 @@ var TogglClient = function (token, options) {
 
 
 
+
+
   var clients = {
     url: function () {
       return _buildUrl('clients');
@@ -81,6 +83,8 @@ var TogglClient = function (token, options) {
 
 
 
+
+
   var projects = {
     url: function () {
       return _buildUrl('projects');
@@ -132,8 +136,17 @@ var TogglClient = function (token, options) {
     getTasks: function (id) {
       var promise = _request(_buildUrl('projects', id, '/tasks'));
       return promise;
+    },
+
+    getAll: function () {
+      var promise = _request(_buildUrl('workspaces', config.defaultWorkspace, 'projects'));
+      return promise;
     }
   };
+
+
+
+
 
   var tags = {
     url: function () {
@@ -165,14 +178,16 @@ var TogglClient = function (token, options) {
 
     },
 
-
-
     del: function (id) {
       var promise = _request(_buildUrl('tags', id), 'DELETE');
       return promise;
     }
 
   };
+
+
+
+
 
   var timers = {
     url: function () {
@@ -264,6 +279,10 @@ var TogglClient = function (token, options) {
     }
   };
 
+
+
+
+
   var users = {
     url: function () {
       return _buildUrl('me');
@@ -278,10 +297,32 @@ var TogglClient = function (token, options) {
   };
 
 
-  var _buildUrl = function (collection, object, action) {
-    return config.baseUrl + config.apiVersion + '/' + collection + ((typeof action !== 'undefined' && typeof object !== 'undefined') ? '/' + object + '/' + action : (typeof action === 'undefined' && typeof object !== 'undefined') ? '/' + object : (typeof object === 'undefined' && typeof action !== 'undefined') ? '/' + action : ''
 
-        );
+
+  var workspaces = {
+    url: function () {
+      return _buildUrl('workspaces');
+    },
+
+
+    get: function (id) {
+      var promise = _request(_buildUrl('workspaces', id));
+      return promise;
+    },
+
+
+    all: function () {
+      var promise = _request(_buildUrl('workspaces'));
+      return promise;
+    }
+
+  };
+
+
+
+
+  var _buildUrl = function (collection, object, action) {
+    return config.baseUrl + config.apiVersion + '/' + collection + ((typeof action !== 'undefined' && typeof object !== 'undefined') ? '/' + object + '/' + action : (typeof action === 'undefined' && typeof object !== 'undefined') ? '/' + object : (typeof object === 'undefined' && typeof action !== 'undefined') ? '/' + action : '');
   };
 
   var _request = function (url, verb, postdata) {
@@ -293,7 +334,7 @@ var TogglClient = function (token, options) {
     } else if (typeof verb === 'undefined' && typeof postdata !== 'undefined') {
       verb = 'POST';
     }
-    console.log(url);
+
     var deferred = $.Deferred();
     $.ajax({
       url: url,
@@ -312,31 +353,6 @@ var TogglClient = function (token, options) {
     return deferred.promise();
   };
 
-  var workspaces = {
-    url: function () {
-      return _buildUrl('workspaces');
-    },
-
-
-    get: function (id) {
-      var promise = _request(_buildUrl('workspaces', id));
-      return promise;
-    },
-
-
-    all: function () {
-      var promise = _request(_buildUrl('workspaces'));
-      return promise;
-    },
-
-
-    allProjects: function () {
-      var promise = _request(_buildUrl('workspaces', config.defaultWorkspace, 'projects'));
-      return promise;
-    }
-
-
-  };
 
 
   _init(token, options);
