@@ -11,7 +11,7 @@ var PivotalClient = function (token, options) {
 
   var _request = function (url, verb, postdata) {
     var headers = {
-      'X-TrackerToken': 'e9c445cd53b2718c5b2a1a48788e5fba'
+      'X-TrackerToken': config.auth
     };
     if (typeof verb === 'undefined' && typeof postdata === 'undefined') {
       verb = 'GET';
@@ -41,14 +41,13 @@ var PivotalClient = function (token, options) {
     if (!token) {
       throw new Error('You must provide your API token to use the Pivotal Tracker API');
     }
-    config.auth = 'X-TrackerToken ' + btoa(token + ':api_token');
+    config.auth = token;
   };
 
   var client = {
     allProjects: function () {
       return _request(_buildUrl('projects'));
     }
-
   };
 
 

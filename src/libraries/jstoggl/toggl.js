@@ -185,10 +185,6 @@ var TogglClient = function (token, options) {
 
   };
 
-
-
-
-
   var timers = {
     url: function () {
       return _buildUrl('timer_entries');

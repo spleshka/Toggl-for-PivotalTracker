@@ -6,28 +6,28 @@
 </head>
 <body>
 
-<div id="status"></div>
-
 <fieldset>
-    <legend>Toggl</legend>
+    <legend>API Tokens</legend>
+
+    <div id="status"></div>
+
     <p>
-        <label for="toggl_token">API Token</label>
+        <label for="toggl_token">Toggl API Token</label>
         <input type="text" name="toggl_token" id="toggl_token" size="38" />
         <span class="description">Go to your <a href="https://www.toggl.com/app/profile">Toggl profile page</a> and copy the API token here.</span>
     </p>
-</fieldset>
 
-<fieldset>
-    <legend>Pivotal Tracker</legend>
     <p>
-        <label for="pt_token">API Token</label>
+        <label for="pt_token">Pivotal API Token</label>
         <input type="text" name="pt_token" id="pt_token" size="38" />
         <span class="description">Go to your <a href="https://www.pivotaltracker.com/profile">Pivotal Tracker profile page</a> and copy the API token here.</span>
     </p>
+
+    <button id="save">Save</button>
 </fieldset>
 
 <fieldset id="projects_map">
-    <legend>Map projects between Toggl and Pivotal Tracker</legend>
+    <legend>Match projects between Toggl and Pivotal</legend>
 
     <table id="projects-map-table">
         <thead>
@@ -62,7 +62,6 @@
 
 </fieldset>
 
-<button id="save">Save</button>
 
 <script src="../../libraries/jquery/jquery-3.1.1.min.js"></script>
 <script src="../../libraries/jstoggl/toggl.js"></script>

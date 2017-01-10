@@ -32,3 +32,11 @@ button {
     margin-bottom: 15px;
     border: 1px solid green;
 }
+
+#projects_map {
+    display: none;
+}
+
+#projects_map.toggl.pivotal {
+    display: block;
+}
