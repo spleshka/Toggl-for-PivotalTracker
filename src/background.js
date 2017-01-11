@@ -39,7 +39,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
  */
 setInterval(function() {
 
-
   chrome.storage.sync.get({ togglToken: '' }, function(storage) {
 
     if (!storage.togglToken) {
@@ -50,18 +49,49 @@ setInterval(function() {
     var toggl = TogglClient(storage.togglToken, {defaultWorkspace: 1783688});
     toggl.timers.current().then(function (response) {
 
-      if (!response.data) {
-        return;
+      // Flag to indicate if Toggl buttons in the UI have to be rebuilt.
+      var buttonsNeedUpdating = false;
+
+      // Save time tracking object for better code readabiility.
+      var currentTimeTracking = response.data;
+
+      // If there's no active timetracking but it's active in extension,
+      // then we need to bring all states & buttons up to date.
+      // Usually it means that somebody stopped time tracking externally.
+      if (!currentTimeTracking && 'activeTimeTrackingID' in localStorage) {
+        delete localStorage['activeTimeTrackingID'];
+        delete localStorage['activeStoryID'];
+        buttonsNeedUpdating = true;
+        console.log('There is no active time tracking, but bg thinks there is. Rebuilding buttons.');
+      }
+      // Process the case when Toggl returned info about active time tracking.
+      else if (currentTimeTracking) {
+
+        // If background script doesn't know about active time tracking in the
+        // Toggl - we have to update buttons states across the board.
+        if (!('activeTimeTrackingID' in localStorage)) {
+          buttonsNeedUpdating = true;
+          console.log('There\'s active time tracking in Toggl but bg thinks there is no timetrackings. Rebuilding buttons.');
+        }
+        // If background script doesn't know that the current time tracking
+        // had been changed - we need to update buttons states.
+        else if (localStorage['activeTimeTrackingID'] != currentTimeTracking.id) {
+          buttonsNeedUpdating = true;
+          console.log('There\'s active time tracking in Toggl but bg has different timetracking id. Rebuilding buttons.');
+        }
+
+        // Safe information about active time tracking.
+        localStorage['activeTimeTrackingID'] = parseInt(currentTimeTracking.id);
+        if (typeof currentTimeTracking.tags != 'undefined') {
+          // TODO: a bit fragile. Probably, to add processing of all tags and
+          // add support of story ids like #1234 from the description.
+          localStorage['activeStoryID'] = parseInt(currentTimeTracking.tags[0]);
+        }
       }
 
-      // TODO: To update buttons when timetracking ID had been changed externally.
-
-      var currentTimeTracking = response.data;
-      localStorage['activeTimeTrackingID'] = parseInt(currentTimeTracking.id);
-
-      // TODO: a bit fragile. To fix.
-      if (typeof currentTimeTracking.tags != 'undefined') {
-        localStorage['activeStoryID'] = parseInt(currentTimeTracking.tags[0]);
+      // Sends message to all tabs to bring Toggl buttons to the new state.
+      if (buttonsNeedUpdating) {
+        reloadTogglButtons();
       }
     });
 
@@ -147,12 +177,7 @@ var startTimeTracking = function(projectID, storyID, storyLabel) {
       localStorage['activeStoryID'] = storyID;
 
       // Sends message to all tabs to bring Toggl buttons to the new state.
-      chrome.tabs.query({url: '*://www.pivotaltracker.com/*'}, function (tabs) {
-        Array.prototype.forEach.call(tabs, function (tab) {
-          chrome.tabs.sendMessage(tab.id, {action: 'reloadButtons'});
-        });
-      });
-
+      reloadTogglButtons();
     });
 
   });
@@ -179,12 +204,22 @@ var stopTimeTracking = function() {
       delete localStorage['activeStoryID'];
 
       // Sends message to all tabs to bring Toggl buttons to the new state.
-      chrome.tabs.query({url: '*://www.pivotaltracker.com/*'}, function (tabs) {
-        Array.prototype.forEach.call(tabs, function (tab) {
-          chrome.tabs.sendMessage(tab.id, {action: 'reloadButtons'});
-        });
-      });
+      reloadTogglButtons();
+    });
 
+    // Todo: implement case when timetracking was stopped externally.
+
+  });
+};
+
+/**
+ * A function that sends message to all tabs to refresh states of
+ * all visible Toggl buttons.
+ */
+var reloadTogglButtons = function() {
+  chrome.tabs.query({url: '*://www.pivotaltracker.com/*'}, function (tabs) {
+    Array.prototype.forEach.call(tabs, function (tab) {
+      chrome.tabs.sendMessage(tab.id, {action: 'reloadButtons'});
     });
   });
 };
