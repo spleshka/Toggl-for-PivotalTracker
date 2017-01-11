@@ -13,7 +13,7 @@ var togglButton = {
     togglRow.innerHTML = '<em>Toggl timer</em>';
 
     // Place the row on top of the info box.
-    var storyInfoBox = story.querySelector('.info_box .info');
+    var storyInfoBox = story.querySelector('.info_box');
     storyInfoBox.insertBefore(togglRow, storyInfoBox.firstChild);
 
     this.renderButton(story, togglRow);
