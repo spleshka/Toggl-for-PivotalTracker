@@ -59,8 +59,7 @@ setInterval(function() {
       // then we need to bring all states & buttons up to date.
       // Usually it means that somebody stopped time tracking externally.
       if (!currentTimeTracking && 'activeTimeTrackingID' in localStorage) {
-        delete localStorage['activeTimeTrackingID'];
-        delete localStorage['activeStoryID'];
+        removeActiveTimeTracking();
         buttonsNeedUpdating = true;
         console.log('There is no active time tracking, but bg thinks there is. Rebuilding buttons.');
       }
@@ -80,13 +79,15 @@ setInterval(function() {
           console.log('There\'s active time tracking in Toggl but bg has different timetracking id. Rebuilding buttons.');
         }
 
-        // Safe information about active time tracking.
-        localStorage['activeTimeTrackingID'] = parseInt(currentTimeTracking.id);
+        // Save information about active time tracking.
+        var storyID = 0;
+        var timerID = parseInt(currentTimeTracking.id);
         if (typeof currentTimeTracking.tags != 'undefined') {
           // TODO: a bit fragile. Probably, to add processing of all tags and
           // add support of story ids like #1234 from the description.
-          localStorage['activeStoryID'] = parseInt(currentTimeTracking.tags[0]);
+          storyID = parseInt(currentTimeTracking.tags[0]);
         }
+        setActiveTimeTracking(timerID, storyID);
       }
 
       // Sends message to all tabs to bring Toggl buttons to the new state.
@@ -140,8 +141,7 @@ var getActiveStory = function() {
   console.log('request to fetch active story. Here is local storage:');
   console.log(localStorage);
 
-
-  if (typeof localStorage['activeStoryID'] != 'undefined') {
+  if ('activeStoryID' in localStorage) {
     return localStorage['activeStoryID'];
   }
 
@@ -173,8 +173,7 @@ var startTimeTracking = function(projectID, storyID, storyLabel) {
     toggl.timers.start('#' + storyID + ' ' + storyLabel, localStorage[projectID], tags).then(function (timer) {
 
       // Update info about active time tracking entry and active PT story.
-      localStorage['activeTimeTrackingID'] = timer.data.id;
-      localStorage['activeStoryID'] = storyID;
+      setActiveTimeTracking(timer.data.id, storyID);
 
       // Sends message to all tabs to bring Toggl buttons to the new state.
       reloadTogglButtons();
@@ -200,8 +199,7 @@ var stopTimeTracking = function() {
     toggl.timers.stop(localStorage['activeTimeTrackingID']).then(function () {
 
       // Delete info about active time tracking entry and active PT story.
-      delete localStorage['activeTimeTrackingID'];
-      delete localStorage['activeStoryID'];
+      removeActiveTimeTracking();
 
       // Sends message to all tabs to bring Toggl buttons to the new state.
       reloadTogglButtons();
@@ -222,4 +220,25 @@ var reloadTogglButtons = function() {
       chrome.tabs.sendMessage(tab.id, {action: 'reloadButtons'});
     });
   });
+};
+
+/**
+ * Updates info about active time tracking entry and active PT story.
+ */
+var setActiveTimeTracking = function(timerID, storyID) {
+  storyID = storyID || 0;
+  chrome.browserAction.setIcon({ path: 'src/icons/active48.png' });
+
+
+  localStorage['activeTimeTrackingID'] = timerID;
+  localStorage['activeStoryID'] = storyID;
+};
+
+/**
+ * Deletes info about active time tracking entry and active PT story.
+ */
+var removeActiveTimeTracking = function() {
+  chrome.browserAction.setIcon({ path: 'src/icons/icon48.png' });
+  delete localStorage['activeTimeTrackingID'];
+  delete localStorage['activeStoryID'];
 };

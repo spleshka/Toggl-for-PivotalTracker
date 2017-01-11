@@ -6,10 +6,10 @@
   "description": "Provides integration between Toggle time tracking tool and Pivotal Tracker.",
   "homepage_url": "https://github.com/spleshka/Toggl-for-PivotalTracker",
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "src/icons/icon16.png",
+    "32": "src/icons/icon32.png",
+    "48": "src/icons/icon48.png",
+    "128": "src/icons/icon128.png"
   },
   "permissions": [
     "*://www.pivotaltracker.com/*",
@@ -19,7 +19,7 @@
   ],
   "browser_action": {
     "default_title": "Toggl for PivotalTracker",
-    "default_icon": "icons/icon16.png"
+    "default_icon": "src/icons/icon48.png"
   },
   "content_scripts": [
     {
