@@ -30,7 +30,6 @@ var togglButton = {
       console.log(response);
 
       // Get story ID from the story meta info.
-      // TODO: doesn't work for single story pages.
       var storyID = togglButton.fetchStoryID(story);
       console.log('opened story id is:');
       console.log(storyID);

@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener(function(request) {
       break;
 
     case 'reloadButtons':
-      reloadTogglButtons();
+      rebuildTogglButtons();
       break;
   }
 
@@ -124,7 +124,7 @@ var handleCollapsedStory = function(story) {
  * in time tracking entities (usually it's starting or
  * stopping time tracking).
  */
-var reloadTogglButtons = function() {
+var rebuildTogglButtons = function() {
   console.log('Got request to reload Toggl Buttons');
 
   var stories = document.querySelectorAll('.story.item');
