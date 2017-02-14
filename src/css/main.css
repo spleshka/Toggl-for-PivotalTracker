@@ -107,3 +107,9 @@
 .label.toggl-stat {
   color: #9B150B !important;
 }
+
+.toggl-hrs {
+  font-weight: bold;
+  font-size: 1.3em;
+  color: khaki;
+}

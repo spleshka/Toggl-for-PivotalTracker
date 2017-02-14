@@ -1,6 +1,7 @@
-var TogglClient = function (token, options) {
+var TogglReport = function (token, options) {
+
   var config = {
-    clientName: 'Toggl Report Client',
+    clientName: 'Toggl for PivotalTracker Chrome extension',
     baseUrl: 'https://toggl.com/reports/api/',
     apiVersion: 'v2'
   };
@@ -16,10 +17,17 @@ var TogglClient = function (token, options) {
     }
   };
 
-
   var _buildUrl = function (action, options) {
+
+    if (!options) {
+      options = [];
+    }
+
+    options['user_agent'] = config.clientName;
+    options['workspace_id'] = config.defaultWorkspace;
+
     var query = options ? _encodeQueryData(options) : '';
-    return config.baseUrl + config.apiVersion + '/' + action + query ? '?' + query : '';
+    return config.baseUrl + config.apiVersion + '/' + action + (query ? '?' + query : '');
   };
 
   var _encodeQueryData = function (data) {
@@ -58,12 +66,16 @@ var TogglClient = function (token, options) {
   };
 
 
-
-
   var detailed = {
 
+    /**
+     * @see https://github.com/toggl/toggl_api_docs/blob/master/reports/detailed.md
+     * @param options
+     */
     get: function (options) {
-      var promise = _request(_buildUrl('detailed', options));
+      var url = _buildUrl('details', options);
+      console.log('Request URL: ' + url);
+      var promise = _request(url);
       return promise;
     }
   };

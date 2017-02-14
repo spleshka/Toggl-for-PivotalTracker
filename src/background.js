@@ -5,7 +5,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
   console.log('--- background got a new request to handle');
   console.log(request);
+
   var pivotalProjectID;
+  var togglProjectID;
 
   switch (request.action) {
 
@@ -16,13 +18,19 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
     case 'startTimeTracking':
       pivotalProjectID = getPivotalProjectID(sender);
-      var togglProjectID = localStorage[pivotalProjectID];
+      togglProjectID = localStorage.getItem(pivotalProjectID);
       var label = '#' + request.storyID + ' ' + request.storyLabel;
       timeTracking.start(togglProjectID, label);
       break;
 
     case 'stopTimeTracking':
       timeTracking.stop();
+      break;
+
+    case 'updateProjectTimeThisMonth':
+      pivotalProjectID = getPivotalProjectID(sender);
+      togglProjectID = localStorage.getItem(pivotalProjectID);
+      updatePivotalProjectTimeThisMonth(togglProjectID, pivotalProjectID);
       break;
 
     case 'getActiveStory':
@@ -133,6 +141,42 @@ var init = function(pivotalProjectID, tab) {
         chrome.tabs.sendMessage(tab.id, { action: "initialized" });
       }
     });
+
+  });
+};
+
+/**
+ * Get & Update information regarding time spent in the project
+ * within the current month.
+ *
+ * @param togglProjectID
+ *   Mapped project ID in Toggl.
+ *
+ * @param pivotalProjectID
+ *   PT project ID.
+ */
+var updateProjectTimeThisMonth = function(togglProjectID, pivotalProjectID) {
+  chrome.storage.sync.get({ togglToken: '', pivotalLoggedTime: {} }, function (storage) {
+
+    if (!storage.togglToken) {
+      return;
+    }
+
+    // Calculate date of the first day of the current month.
+    var date = new Date();
+    var currentYear = date.getFullYear();
+    var currentMonth = ("0" + (date.getMonth() + 1)).slice(-2);
+    var startDate = currentYear + '-' + currentMonth + '-01';
+
+    // Get all time entries for the project since the start of this month.
+    var TogglRep = TogglReport(storage.togglToken, { defaultWorkspace: 1783688 });
+    TogglRep.detailed.get({ project_ids: togglProjectID, since: startDate })
+      .then(function (response) {
+
+        // Save amount of milliseconds logged against PT project.
+        storage.pivotalLoggedTime['pt_' + pivotalProjectID] = response.total_grand ? response.total_grand : 0;
+        chrome.storage.sync.set({ pivotalLoggedTime: storage.pivotalLoggedTime });
+      });
 
   });
 };

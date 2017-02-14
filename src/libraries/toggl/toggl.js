@@ -6,7 +6,7 @@
 
 var TogglClient = function (token, options) {
   var config = {
-    clientName: 'Toggl JS Client',
+    clientName: 'Toggl for PivotalTracker Chrome extension',
     baseUrl: 'https://www.toggl.com/api/',
     apiVersion: 'v8'
   };
