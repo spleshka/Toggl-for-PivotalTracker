@@ -26,11 +26,21 @@ function restore_toggl_options() {
     }
 
     var Toggl = TogglClient(storage.togglToken, {defaultWorkspace: 1783688});
+
+    /*Toggl.workspaces.tags(1783688).
+     then(function(response) {
+     console.log(response);
+     });*/
+
+
     Toggl.projects.getAll()
       .then(function (projects) {
 
         var projectsSelect = document.getElementById('toggl-projects');
         projectsSelect.innerHTML = '';
+
+        // Sort Toggl projects by name ASC.
+        projects.sort(sortByName);
 
         projects.forEach(function (project) {
           if ($.inArray(project.id, usedTogglProjects) == -1) {
@@ -78,6 +88,9 @@ function restore_pivotal_options () {
 
         var projectsSelect = document.getElementById('pt-projects');
         projectsSelect.innerHTML = '';
+
+        // Add sorting of projects by "name" attribute.
+        projects.sort(sortByName);
 
         projects.forEach(function (project) {
           if ($.inArray(project.id, usedPivotalProjects) == -1) {
@@ -151,16 +164,16 @@ function save_options() {
 
     location.reload();
 
-  /*
+    /*
 
-    // Update status to let user know options were saved.
-    var status = document.getElementById('status');
-    status.textContent = 'Options have been successfully saved.';
-    status.classList = 'active';
-    setTimeout(function () {
-      status.textContent = '';
-      status.classList = '';
-    }, 2000);*/
+     // Update status to let user know options were saved.
+     var status = document.getElementById('status');
+     status.textContent = 'Options have been successfully saved.';
+     status.classList = 'active';
+     setTimeout(function () {
+     status.textContent = '';
+     status.classList = '';
+     }, 2000);*/
   });
 }
 
@@ -215,4 +228,14 @@ function delete_projects_map() {
     restore_pivotal_options();
   });
 
+}
+
+function sortByName(a, b) {
+  if (a.name > b.name) {
+    return 1;
+  }
+  if (a.name < b.name) {
+    return -1;
+  }
+  return 0;
 }
