@@ -18,6 +18,17 @@ chrome.storage.sync.get({ togglToken: '' }, function(storage) {
       // Clean default 'Loading..' option from the list.
       $togglProjects.html('');
 
+      // Added sorting of elements by name.
+      projects.sort(function (a, b) {
+        if (a.name > b.name) {
+          return 1;
+        }
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 0;
+      });
+
       // Add each Toggl project to the select element.
       Array.prototype.forEach.call(projects, function (project) {
         var $option = $('<option/>').val(project.id).text(project.name);
