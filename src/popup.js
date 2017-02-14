@@ -60,6 +60,7 @@ var setCurrentFormState = function() {
   // Check if there's available active time tracking.
   var activeTimeTracking = timeTracking.getActive();
   if (activeTimeTracking) {
+    console.log('there is active timetracking');
 
     // Pre-select active Toggl project in the select list and lock it.
     $togglProjects.find('option[value="' + activeTimeTracking.pid + '"]').attr('selected', 'selected');
@@ -73,9 +74,10 @@ var setCurrentFormState = function() {
     // Bring button to the current state.
     $button.removeClass('start').addClass('stop');
     $button.text('Stop');
-    $button.click(popupButton.stop);
+    $button.unbind('click').click(popupButton.stop);
   }
   else {
+    console.log('there is NO active timetracking');
 
     // Remove default selection for Toggl projects and make it enabled again.
     $togglProjects.find('option[selected="selected"]').removeAttr('selected');
@@ -88,7 +90,7 @@ var setCurrentFormState = function() {
     // Bring button to the current state.
     $button.removeClass('stop').addClass('start');
     $button.text('Start');
-    $button.click(popupButton.start);
+    $button.unbind('click').click(popupButton.start);
   }
 };
 
