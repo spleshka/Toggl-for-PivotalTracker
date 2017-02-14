@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     case 'updateProjectTimeThisMonth':
       pivotalProjectID = getPivotalProjectID(sender);
       togglProjectID = localStorage.getItem(pivotalProjectID);
-      updatePivotalProjectTimeThisMonth(togglProjectID, pivotalProjectID);
+      updateProjectTimeThisMonth(togglProjectID, pivotalProjectID);
       break;
 
     case 'getActiveStory':
