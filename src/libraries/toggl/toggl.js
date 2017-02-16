@@ -310,6 +310,11 @@ var TogglClient = function (token, options) {
     all: function () {
       var promise = _request(_buildUrl('workspaces'));
       return promise;
+    },
+
+    tags: function(id) {
+      var promise = _request(_buildUrl('workspaces', id, 'tags'));
+      return promise;
     }
 
   };

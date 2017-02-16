@@ -108,10 +108,19 @@
   color: #9B150B !important;
 }
 
-.toggl-hrs {
+.toggl-month-hrs {
   font-weight: bold;
   font-size: 1.3em;
   color: khaki;
   margin-right: 13px;
   line-height: 37px;
+}
+
+.toggl-time {
+  position: absolute;
+  left: 17px;
+  top: 21px;
+  font-size: 0.7em;
+  color: brown;
+  font-weight: bold;
 }

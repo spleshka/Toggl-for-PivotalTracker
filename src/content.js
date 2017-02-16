@@ -6,11 +6,11 @@
 chrome.runtime.sendMessage({ action: 'init' });
 
 /**
- *
+ * Listen for messages from backgrounds script or popup.
  */
 chrome.runtime.onMessage.addListener(function(request) {
 
-  console.log('content got message.');
+  console.log('content.js got message:');
   console.log(request);
 
   switch(request.action) {
@@ -21,11 +21,24 @@ chrome.runtime.onMessage.addListener(function(request) {
       finalizeInitialization();
       break;
 
+    // Gets feedback from the background script to reload Toggl Start/Stop
+    // buttons.
     case 'reloadButtons':
       rebuildTogglButtons();
       break;
-  }
 
+    // Gets feedback from the background script when list with story IDs
+    // and logged time is ready.
+    case 'displayTimeLoggedPerStory':
+      displayTimeLoggedPerStory(request.timeLoggedPerStory);
+      break;
+
+    // Gets information about time logged in this month for the given
+    // project.
+    case 'displayTimeLoggedInProjectThisMonth':
+      displayTimeLoggedInProjectThisMonth(request.timeLoggedInProjectThisMonth);
+      break;
+  }
 });
 
 /**
@@ -44,9 +57,6 @@ var finalizeInitialization = function() {
     clearInterval(readyStateCheckInterval);
 
     console.log('Document is ready');
-
-    // Send request to the backend to fetch hrs spent this month.
-    chrome.runtime.sendMessage({ action: 'updateProjectTimeThisMonth' });
 
     // Create a new observer to track DOM changes.
     var observer = new MutationObserver(function (mutations) {
@@ -88,89 +98,187 @@ var processMutation = function(node) {
     return;
   }
 
-  // Handle project hrs spent this month.
-  handleProjectHeader(node);
+  handleHeader(node);
 
+  // Handle all expanded stories.
+  handleExpandedStories(stories);
+
+  // Handle all collapsed stories.
+  handleCollapsedStories(stories);
+};
+
+/**
+ * Processes all expanded stories in PT.
+ *
+ * @param stories
+ *   Array of DOM selectors for stories
+ */
+var handleExpandedStories = function(stories) {
+
+  // TODO: Is there an option to improve performance to avoid querying of
+  // selectors for each story?
   Array.prototype.forEach.call(stories, function(story) {
-    // TODO: Is there an option to improve performance to avoid querying of
-    // selectors for each story?
 
-    // Handle expanded story.
+    // Adds time tracking button in the right state to the expanded story.
     if (story.querySelector('.info_box')) {
-      handleExpandedStory(story);
+      togglButton.render(story);
     }
-    // Handle collapsed story.
-    else {
-      handleCollapsedStory(story);
-    }
-
   });
 };
 
 /**
- * Adds a time tracking button in the right state
- * to the expanded story.
- */
-var handleExpandedStory = function(story) {
-  /*console.log('expanded story');
-   console.log(story);*/
-
-  togglButton.render(story);
-};
-
-/**
+ * Processes all collapsed stories in PT.
  * Shows time spent on every collapsed story.
  */
-var handleCollapsedStory = function(story) {
-  /*console.log('collapsed story');
-   console.log(story);*/
+var handleCollapsedStories = function(stories) {
+
+  // Array to gather list of visible PT Story IDs.
+  var pivotalStoryIDs = [];
+
+  Array.prototype.forEach.call(stories, function(story) {
+
+    // Ignore expanded stories.
+    if (story.querySelector('.info_box')) {
+      return;
+    }
+
+    // At this point we deliberately ignore iceboxed stories.
+    // TODO: include iceboxed stories?
+    if (story.classList.contains('unscheduled')) {
+      return;
+    }
+
+    // Prepare html for time logged per story only once.
+    if (!story.querySelector('.toggl-time')) {
+
+      // TODO: Debug why done stories load even though they
+      // are not set to display.
+      //console.log(story);
+
+      // Create a new span element for display of Toggl time logged.
+      var togglLogged = document.createElement('span');
+      togglLogged.classList += 'toggl-time';
+
+      // Set an attribute just because it's more performance to get story ID
+      // from this selector in the future. See displayLoggedTimePerStory().
+      var storyID = story.getAttribute('data-id');
+      togglLogged.setAttribute('data-id', storyID);
+
+      // Append our custom html to the story header section.
+      var header = story.querySelector('header.preview');
+      header.appendChild(togglLogged);
+
+      // Add PT story ID to the array of visible stories.
+      pivotalStoryIDs.push(storyID);
+    }
+  });
+
+  // If there are no stories then we're done here.
+  if (!pivotalStoryIDs.length) {
+    return;
+  }
+
+  console.log('List of PT Story IDs:');
+  console.log(pivotalStoryIDs);
+
+  // Send request to the background script to fetch time for visible stories.
+  chrome.runtime.sendMessage({
+    action: 'fetchTimeLoggedPerStory',
+    pivotalStoryIDs: pivotalStoryIDs
+  });
 };
 
 /**
- * Adds time spent within the project to the header section.
+ * Adds monthly used hours to the PT header section.
+ * @param dom
+ *   DOM object.
  */
-var handleProjectHeader = function(node) {
+var handleHeader = function(dom) {
 
-  // Get selector of PT header.
-  var header = node.querySelector('header.tc_page_header');
+  // Get selector of PT project header.
+  var header = dom.querySelector('header.tc_page_header');
   if (!header) {
     return;
   }
 
-  // Skip this function if time is already rendered.
-  if (header.querySelector('li.toggl-hrs')) {
-    return;
+  // Don't send request to fetch time logged in this project this month more
+  // than once.
+  if (!header.querySelector('.toggl-month-hrs')) {
+
+    // Prepare HTML element to make sure it appears only once on the page.
+    var li = document.createElement('li');
+    li.classList = 'toggl-month-hrs';
+    header.querySelector('ul').appendChild(li);
+
+    // Send request to the backend to fetch hrs spent this month.
+    chrome.runtime.sendMessage({ action: 'fetchTimeLoggedInProjectThisMonth' });
   }
-
-  // Create a new li element where the message will be printed.
-  var li = document.createElement('li');
-  li.classList += 'toggl-hrs';
-  header.querySelector('ul').appendChild(li);
-
-  // Get info about hrs logged within projects. This info gets updated
-  // per project on each page open request at background, see
-  // updateProjectTimeThisMonth() for reference.
-  chrome.storage.sync.get({ pivotalLoggedTime: [] }, function (storage) {
-
-    // Get project ID from the URL.
-    // TODO: Move to standalone function or use function from background.js
-    const regex = /\/n\/projects\/(\d+)/;
-    var regExp = regex.exec(window.location.href );
-    var pivotalProjectID = parseInt(regExp[1]);
-
-    console.log('List of PT projects and time spent this month is each of those:');
-    console.log(storage.pivotalLoggedTime);
-
-    // Get amount of milliseconds spend per project and display that to the user.
-    var projectLogged = storage.pivotalLoggedTime['pt_' + pivotalProjectID];
-    if (projectLogged) {
-      var hours = Math.round(projectLogged / 1000 / 3600);
-      li.innerText = 'This month logged: ' + hours + 'hrs';
-    }
-  });
-
 };
 
+/**
+ * Adds time spent within the project to the header section.
+ *
+ * @param timeLoggedInProjectThisMonth
+ *   Amount of time (in milliseconds) logged against the project
+ *   in the current month.
+ */
+var displayTimeLoggedInProjectThisMonth = function(timeLoggedInProjectThisMonth) {
+
+  console.log('Amount of time logged in the project this month:');
+  console.log(timeLoggedInProjectThisMonth);
+
+  // Get selector of PT project header.
+  var header = document.querySelector('header.tc_page_header');
+  console.log(header);
+
+  // Get human readable amount of hrs logged this month in the project.
+  var hours = Math.floor(timeLoggedInProjectThisMonth / 1000 / 3600);
+
+  // Add human readable title to the header of the page.
+  header.querySelector('.toggl-month-hrs').innerText = 'This month logged: ' + hours + 'hrs';
+};
+
+/**
+ * Shows how much time was logged against each PT story.
+ * This function is being invoked as soon as message from
+ * background script is received.
+ * @see chrome.runtime.onMessage.addListener
+ *
+ * @param timeLoggedPerStory
+ *   Array with PT Stories and logged time.
+ *   - Array keys are PT Story IDs
+ *   - Array values are logged time (in seconds).
+ */
+var displayTimeLoggedPerStory = function(timeLoggedPerStory) {
+
+  // Get list of all story IDs to loop through each of those.
+  var storyIDs = Object.keys(timeLoggedPerStory);
+
+  // Show logged time per each story.
+  Array.prototype.forEach.call(storyIDs, function(storyID) {
+
+    // Find html container for display of toggl time spent at the story.
+    var togglContainer = document.querySelector('.toggl-time[data-id="' + storyID + '"]');
+
+    // If for any reason the container doesn't exist - then we're done here.
+    if (!togglContainer) {
+      return;
+    }
+
+    // Get amount of seconds from Toggl logged against the story.
+    var seconds = timeLoggedPerStory[storyID];
+
+    // Convert seconds into human readable minutes and hours.
+    var hours = parseInt(seconds / 3600);
+    var minutes = parseInt((seconds - hours * 3600) / 60);
+
+    // Add human readable time to the html.
+    togglContainer.innerHTML = hours ? hours + 'h ' + minutes + 'm' : minutes + 'm';
+  });
+
+  console.log('Time logged per stories: ');
+  console.log(timeLoggedPerStory);
+};
 
 /**
  * Function which is being invoked after any change
@@ -198,6 +306,3 @@ var rebuildTogglButtons = function() {
     }
   });
 };
-
-
-

@@ -143,7 +143,7 @@ var timeTracking = {
     // Send message to tabs where PT is opened.
     chrome.tabs.query({ url: '*://www.pivotaltracker.com/*' }, function (tabs) {
       Array.prototype.forEach.call(tabs, function (tab) {
-        chrome.tabs.sendMessage(tab.id, {action: 'reloadButtons'});
+        chrome.tabs.sendMessage(tab.id, { action: 'reloadButtons' });
       });
     });
 
