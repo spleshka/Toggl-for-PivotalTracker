@@ -117,9 +117,6 @@
 }
 
 .toggl-time {
-  position: absolute;
-  left: 17px;
-  top: 21px;
   font-size: 0.7em;
   color: brown;
   font-weight: bold;
