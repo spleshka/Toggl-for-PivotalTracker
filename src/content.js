@@ -274,6 +274,11 @@ var displayTimeLoggedPerStory = function(timeLoggedPerStory) {
 
     // Add human readable time to the html.
     togglContainer.innerHTML = hours ? hours + 'h ' + minutes + 'm' : minutes + 'm';
+
+    var rowWrapper = togglContainer.parentNode;
+    if (rowWrapper.clientHeight < 40) {
+      rowWrapper.style.height = "40px";
+    }
   });
 
   console.log('Time logged per stories: ');
