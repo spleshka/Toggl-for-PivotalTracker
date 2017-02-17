@@ -232,7 +232,7 @@ var displayTimeLoggedInProjectThisMonth = function(timeLoggedInProjectThisMonth)
   console.log(header);
 
   // Get human readable amount of hrs logged this month in the project.
-  var hours = Math.floor(timeLoggedInProjectThisMonth / 1000 / 3600);
+  var hours = Math.round(timeLoggedInProjectThisMonth / 1000 / 3600);
 
   // Add human readable title to the header of the page.
   header.querySelector('.toggl-month-hrs').innerText = 'This month logged: ' + hours + 'hrs';
