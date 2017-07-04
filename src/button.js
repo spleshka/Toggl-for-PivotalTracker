@@ -35,7 +35,7 @@ var togglButton = {
       console.log(storyID);
 
       // Get story label from the textfield.
-      var storyLabel = story.querySelector('textarea.name').innerHTML;
+      var storyLabel = story.querySelector('textarea[name="story[name]').innerHTML;
 
       var trackButton = document.createElement('a');
       trackButton.setAttribute('href', '#');
