@@ -55,6 +55,7 @@ chrome.runtime.onMessage.addListener(function(message) {
       break;
   }
 
+  sendResponse({test: 'yes'});
 });
 
 var setCurrentFormState = function() {
@@ -114,11 +115,18 @@ var popupButton = {
     var $form = $(this).parents('form');
     var timeTrackingLabel = $form.find('#time-tracking-current').val();
     var togglProjectID = $form.find('#toggl-projects').val();
-    timeTracking.start(togglProjectID, timeTrackingLabel);
+
+    console.log('Registered click to start time tracking');
+    chrome.runtime.sendMessage({
+      action: 'startTimeTracking',
+      toggleProjectID: togglProjectID,
+      label: timeTrackingLabel
+    });
   },
 
   stop: function() {
-    timeTracking.stop();
+    console.log('Registered click to stop time tracking');
+    chrome.runtime.sendMessage({ action: 'stopTimeTracking' });
   }
 
 };

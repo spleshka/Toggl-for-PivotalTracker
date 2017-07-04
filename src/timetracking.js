@@ -148,7 +148,9 @@ var timeTracking = {
     });
 
     // Send message to popup to update its state.
-    chrome.runtime.sendMessage({ action: 'reloadPopup' });
+    chrome.runtime.sendMessage({ action: 'reloadPopup' }, function(response) {
+      console.log(response);
+    });
   }
 
 };

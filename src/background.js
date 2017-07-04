@@ -21,9 +21,21 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       break;
 
     case 'startTimeTracking':
-      pivotalProjectID = getPivotalProjectID(sender);
-      togglProjectID = localStorage.getItem(pivotalProjectID);
-      var label = '#' + request.storyID + ' ' + request.storyLabel;
+
+      var label;
+      // If request comes with toggle project ID property it means that
+      // the request was sent from popup.
+      if (request.hasOwnProperty('toggleProjectID')) {
+        togglProjectID = request.toggleProjectID;
+        label = request.hasOwnProperty('label') ? request.label : '';
+      }
+      // Handle request from PT page.
+      else {
+        pivotalProjectID = getPivotalProjectID(sender);
+        togglProjectID = localStorage.getItem(pivotalProjectID);
+        label = '#' + request.storyID + ' ' + request.storyLabel;
+      }
+
       timeTracking.start(togglProjectID, label);
       break;
 
