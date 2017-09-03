@@ -203,6 +203,24 @@ var TogglClient = function (token, options) {
     },
 
 
+    forToday: function () {
+      // Gets components of current date.
+      var date = new Date();
+      var fullYear = date.getFullYear();
+      var currentMonth = ('0' + (date.getMonth() + 1)).slice(-2);
+      var currentDay = ('0' + date.getDate()).slice(-2);
+
+      // Gets user's timezone.
+      var timeZone = date.toString().match(/([-\+][0-9]+)\s/)[1];
+      timeZone = timeZone.slice(0, 3) + ':' + timeZone.slice(3); // Put `:` to convert +0300 to +03:00
+
+      // Prepares date in 2017-09-04T00:00:00+03:00 format.
+      var formattedtoday = fullYear + '-' + currentMonth + '-' + currentDay + 'T00:00:00' + timeZone;
+      var promise = _request(_buildUrl('time_entries') + '?start_date=' + encodeURIComponent(formattedtoday));
+      return promise;
+    },
+
+
     create: function (description, tagArray) {
       var data = {
         'time_entry': {

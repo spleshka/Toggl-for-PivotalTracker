@@ -132,6 +132,43 @@ setInterval(function() {
 }, 5000); // TODO: Too often?
 
 /**
+ * Outputs tracked time for today to widget button.
+ */
+setInterval(function() {
+
+  chrome.storage.sync.get({ togglToken: '' }, function(storage) {
+
+    if (!storage.togglToken) {
+      return;
+    }
+
+    // TODO: Make workspace configurable.
+    var toggl = TogglClient(storage.togglToken, { defaultWorkspace: 1783688 });
+    toggl.timers.forToday().then(function (response) {
+
+      var totalDuration = 0;
+      response.forEach(function(object) {
+        // Not finished records don't contain stop property.
+        if (object.hasOwnProperty('stop')) {
+          // Calculates total duration for finished records.
+          totalDuration += parseInt(object.duration);
+        }
+        else {
+          // Calculates total duration for not finished record (no stop property).
+          var now = Math.floor(Date.now() / 1000);
+          totalDuration += now + parseInt(object.duration);
+        }
+      });
+
+      // Converts date from timestamp to h:s format.
+      var formattedTime = new Date(totalDuration * 1e3).toISOString().slice(-12, -8);
+      // Outputs current time to widget button.
+      chrome.browserAction.setBadgeText({text: formattedTime});
+    });
+  });
+}, 30000);
+
+/**
  * Performs initial validation of tab's url to make
  * sure that the current PT project is mapped to Toggl project.
  */
