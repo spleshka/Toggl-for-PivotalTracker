@@ -235,13 +235,14 @@ var TogglClient = function (token, options) {
     },
 
 
-    start: function (description, pid, tagArray, duration, start) {
+    start: function (description, pid, tagArray, billable, duration, start) {
       var data = {
         'time_entry': {
           'description': description,
           'pid': pid,
           'tags': tagArray,
           'duration': duration,
+          'billable': billable,
           'start': start,
           'wid': config.defaultWorkspace,
           'created_with': config.clientName

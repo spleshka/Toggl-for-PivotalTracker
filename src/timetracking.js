@@ -39,9 +39,14 @@ var timeTracking = {
 
       // TODO: Make workspace configurable.
       var toggl = TogglClient(storage.togglToken, { defaultWorkspace: 1783688 });
-      toggl.timers.start(label, togglProjectID, tags)
-        .then(function (timer) {
+      // Gets information about the project before start timer.
+      toggl.projects.get(togglProjectID)
+        .then(function(project) {
 
+          // Passes billable tag to the timer.
+          return toggl.timers.start(label, togglProjectID, tags, project.data.billable);
+        })
+        .then(function (timer) {
           // Update info about active time tracking entry and active PT story.
           timeTracking.setActive(timer.data, storyID);
 
